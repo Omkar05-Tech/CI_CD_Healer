@@ -1,0 +1,79 @@
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual Environment
+venv/
+*/backend/.env/
+.venv/
+
+# ----------------------
+# Environment Variables (IMPORTANT)
+# ----------------------
+*.env
+
+# ----------------------
+# Logs
+# ----------------------
+*.log
+
+# ----------------------
+# Database
+# ----------------------
+*.sqlite3
+*.db
+
+# ----------------------
+# Build / Cache
+# ----------------------
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# ----------------------
+# Docker
+# ----------------------
+docker-compose.override.yml
+
+# ----------------------
+# IDE / Editor
+# ----------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ----------------------
+# OS Files
+# ----------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# Test / Coverage
+# ----------------------
+.coverage
+htmlcov/
+.pytest_cache/
+
+# ----------------------
+# Results (IMPORTANT DECISION)
+# ----------------------
+results/results.json
+
+# ----------------------
+# Temporary Files
+# ----------------------
+*.tmp
+*.temp
+
+# ----------------------
+# Node (if frontend in same repo)
+# ----------------------
+node_modules/

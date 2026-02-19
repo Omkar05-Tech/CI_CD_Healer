@@ -1,0 +1,40 @@
+{
+    "repository": "https://github.com/test/repo",
+    "branch": "RIFT_ORGANISERS_SAIYAM_KUMAR_AI_FIX",
+    "status": "FAILED",
+    "iterations": 5,
+    "time_taken": 0.0,
+    "total_fixes": 5,
+    "fixes": [
+        {
+            "file": "src/utils.py",
+            "bug_type": "LINTING",
+            "line": 15,
+            "status": "Fixed"
+        },
+        {
+            "file": "src/utils.py",
+            "bug_type": "LINTING",
+            "line": 15,
+            "status": "Fixed"
+        },
+        {
+            "file": "src/utils.py",
+            "bug_type": "LINTING",
+            "line": 15,
+            "status": "Fixed"
+        },
+        {
+            "file": "src/utils.py",
+            "bug_type": "LINTING",
+            "line": 15,
+            "status": "Fixed"
+        },
+        {
+            "file": "src/utils.py",
+            "bug_type": "LINTING",
+            "line": 15,
+            "status": "Fixed"
+        }
+    ]
+}

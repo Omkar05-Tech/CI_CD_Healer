@@ -2,24 +2,30 @@
 
 from app.utils.timer import get_time, calculate_time
 from app.services.result_generator import generate_results_json
+from app.db.database import SessionLocal
+from app.db.models import Run, Fix
 
-# these will come from your teammates
-# TEMP dummy functions for now
 
+# -------------------------
+# DUMMY FUNCTIONS (same)
+# -------------------------
 def clone_repo(repo_url):
-    print(f"Cloning {repo_url}")
+    print(f"[INFO] Cloning repository: {repo_url}")
+
 
 def create_branch(team, leader):
     return f"{team}_{leader}_AI_Fix".upper().replace(" ", "_")
 
+
 def run_tests():
     return "dummy error log"
+
 
 def check_ci_status():
     return "PASSED"
 
+
 def run_agent_logic(logs):
-    # dummy fix output (replace with Member 1 logic)
     return [
         {
             "file": "src/utils.py",
@@ -30,48 +36,94 @@ def run_agent_logic(logs):
     ]
 
 
+# -------------------------
+# MAIN CONTROLLER
+# -------------------------
+
 async def run_agent_controller(payload):
     start = get_time()
 
-    repo_url = payload["repo_url"]
-    team = payload["team_name"]
-    leader = payload["leader_name"]
+    db = SessionLocal()   # ✅ DB SESSION START
 
-    # STEP 1: Clone
-    clone_repo(repo_url)
+    try:
+        repo_url = payload["repo_url"]
+        team = payload["team_name"]
+        leader = payload["leader_name"]
 
-    # STEP 2: Branch
-    branch = create_branch(team, leader)
+        print("\n========== AGENT START ==========")
 
-    total_fixes = []
-    status = "FAILED"
+        # STEP 1
+        clone_repo(repo_url)
 
-    # STEP 3: Retry loop
-    for iteration in range(5):
+        # STEP 2
+        branch = create_branch(team, leader)
 
-        logs = run_tests()
+        total_fixes = []
+        status = "FAILED"
 
-        errors = run_agent_logic(logs)
+        # STEP 3 LOOP
+        for iteration in range(5):
+            logs = run_tests()
+            errors = run_agent_logic(logs)
 
-        if not errors:
-            status = "PASSED"
-            break
+            if not errors:
+                status = "PASSED"
+                break
 
-        total_fixes.extend(errors)
+            total_fixes.extend(errors)
+            check_ci_status()
 
-        check_ci_status()
+        end = get_time()
+        time_taken = calculate_time(start, end)
 
-    end = get_time()
-    time_taken = calculate_time(start, end)
+        # -------------------------
+        # ✅ SAVE RUN TO DATABASE
+        # -------------------------
+        new_run = Run(
+            repo_url=repo_url,
+            branch=branch,
+            status=status,
+            iterations=iteration + 1,
+            time_taken=time_taken
+        )
 
-    # STEP 4: Generate results
-    result = generate_results_json(
-        repo_url,
-        branch,
-        total_fixes,
-        status,
-        iteration + 1,
-        time_taken
-    )
+        db.add(new_run)
+        db.commit()
+        db.refresh(new_run)
 
-    return result
+        print(f"[DB] Run saved with ID: {new_run.id}")
+
+        # -------------------------
+        # ✅ SAVE FIXES
+        # -------------------------
+        for fix in total_fixes:
+            new_fix = Fix(
+                run_id=new_run.id,
+                file=fix["file"],
+                bug_type=fix["bug_type"],
+                line=fix["line"],
+                status=fix["status"]
+            )
+            db.add(new_fix)
+
+        db.commit()
+        print(f"[DB] {len(total_fixes)} fixes saved")
+
+        # -------------------------
+        # GENERATE RESULT JSON
+        # -------------------------
+        result = generate_results_json(
+            repo_url,
+            branch,
+            total_fixes,
+            status,
+            iteration + 1,
+            time_taken
+        )
+
+        print("========== AGENT END ==========\n")
+
+        return result
+
+    finally:
+        db.close()   # ✅ ALWAYS CLOSE SESSION
