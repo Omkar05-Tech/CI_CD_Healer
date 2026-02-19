@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* Rotates the entire orbital groups for a 3D feel */
+@keyframes orbit-plane-1 {
+  from { transform: rotateX(0deg) rotateY(0deg); }
+  to { transform: rotateX(360deg) rotateY(180deg); }
+}
+
+.animate-orbit-1 { animation: orbit-plane-1 20s linear infinite; }
+.animate-orbit-2 { transform: rotateZ(45deg); }
+.animate-orbit-3 { transform: rotateZ(-45deg); }
+
+/* Ensuring the background doesn't interfere with inputs */
+.z-0 { z-index: 0; }
+.z-20 { z-index: 20; position: relative; }
