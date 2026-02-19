@@ -1,12 +1,32 @@
 services:
+
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: CICD_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/:/app
+      - /app/node_modules
+    env_file:
+      - ./frontend/.env
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+
   backend:
     build: 
       context: ./backend
       dockerfile: Dockerfile
+    container_name: CICD_backend
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
     env_file:
       - ./backend/.env
 

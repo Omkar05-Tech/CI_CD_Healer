@@ -9,9 +9,9 @@ __pycache__/
 
 # Virtual Environment
 venv/
-*/backend/.env/
+./backend/.env
 .venv/
-
+./frontend/.env
 # ----------------------
 # Environment Variables (IMPORTANT)
 # ----------------------
