@@ -264,8 +264,7 @@ def _sanitize_for_branch(text: str) -> str:
     text = re.sub(r'_+', '_', text)            # collapse multiple underscores
     text = text.strip('_')                      # remove leading/trailing underscores
     return text
-
-
+    
 def clone_repo(repo_url: str) -> str:
     """
     Clone the given GitHub repository to temp/agent_repos/<repo_name>.
@@ -274,18 +273,18 @@ def clone_repo(repo_url: str) -> str:
     Returns:
         str: Local path to the cloned repository.
     """
-    repo_name  = repo_url.rstrip("/").split("/")[-1].replace(".git", "")
-    local_path = os.path.join(CLONE_BASE, repo_name)
+    # Define a consistent path for the repo
+    repo_name = repo_url.split("/")[-1].replace(".git", "")
+    local_path = f"/tmp/agent_repos/{repo_name}"
 
-    # Clean slate — force remove even if git locked files (Windows fix)
-    _force_remove(local_path)
+    # 🚨 THE RE-CLONE FIX: Delete the old folder if it exists
+    if os.path.exists(local_path):
+        print(f"[GIT] Cleaning up existing directory: {local_path}")
+        shutil.rmtree(local_path)
 
-    os.makedirs(CLONE_BASE, exist_ok=True)
-
-    logger.info(f"[CLONE] Cloning {repo_url} → {local_path}")
+    print(f"[GIT] Cloning fresh repository from {repo_url}...")
     Repo.clone_from(repo_url, local_path)
-    logger.info(f"[CLONE] Done.")
-
+    
     return local_path
 
 
@@ -311,89 +310,6 @@ def create_branch(repo_path: str, team_name: str, leader_name: str) -> str:
 
     return branch_name
 
-
-# def commit_and_push(
-#     repo_path: str,
-#     branch_name: str,
-#     commit_message: str,
-#     github_token: str,
-#     repo_url: str
-# ) -> dict:
-#     """
-#     Stage all changes, commit with mandatory [AI-AGENT] prefix, push directly
-#     to remote branch — NO pull request, direct commit only.
-
-#     DISQUALIFICATION RISKS HANDLED:
-#       1. [AI-AGENT] prefix → enforced here, impossible to bypass
-#       2. Push to main → guarded, only pushes to branch_name
-#       3. Pull requests → NOT used, direct push via refspec
-#       4. Token exposed → cleaned from remote URL after push
-
-#     Returns:
-#         dict with success, commit_sha, branch, commit_message
-#     """
-#     repo = Repo(repo_path)
-
-#     # Safety guard: NEVER push to main/master — immediate DQ
-#     if branch_name.lower() in ("main", "master"):
-#         raise ValueError(
-#             f"CRITICAL: Refusing to push to protected branch '{branch_name}'."
-#         )
-
-#     # Nothing to commit?
-#     if not repo.is_dirty(untracked_files=True):
-#         logger.info("[COMMIT] No changes to commit.")
-#         return {"success": False, "reason": "no_changes", "branch": branch_name}
-
-#     # Stage all changes
-#     repo.git.add(A=True)
-
-#     # CRITICAL: [AI-AGENT] prefix is MANDATORY — DQ if missing
-#     full_message = f"[AI-AGENT] {commit_message}"
-#     commit = repo.index.commit(full_message)
-#     logger.info(f"[COMMIT] {full_message} → sha: {commit.hexsha[:8]}")
-
-#     # Inject token into URL for auth (never stored permanently)
-#     clean_url = repo_url.replace("https://", "").replace("http://", "").rstrip(".git")
-#     auth_url  = f"https://{github_token}@{clean_url}"
-
-#     try:
-#         origin = repo.remote(name='origin')
-#         origin.set_url(auth_url)
-
-#         # DIRECT PUSH to branch — NO pull request created
-#         # refspec format: local_branch:remote_branch
-#         push_result = origin.push(
-#             refspec=f"refs/heads/{branch_name}:refs/heads/{branch_name}"
-#         )
-
-#         logger.info(f"[PUSH] ✓ Pushed directly to branch: {branch_name}")
-
-#         return {
-#             "success":        True,
-#             "branch":         branch_name,
-#             "commit_sha":     commit.hexsha,
-#             "commit_message": full_message,
-#             "push_summary":   str(push_result[0].summary) if push_result else "ok"
-#         }
-
-#     except GitCommandError as e:
-#         logger.error(f"[PUSH] ✗ Failed: {e}")
-#         return {
-#             "success":        False,
-#             "reason":         str(e),
-#             "branch":         branch_name,
-#             "commit_sha":     commit.hexsha,
-#             "commit_message": full_message
-#         }
-#     finally:
-#         # Always clean token from remote URL (security)
-#         try:
-#             origin.set_url(f"https://github.com/{clean_url.split('github.com/')[-1]}")
-#         except Exception:
-#             pass
-
-# app/services/git_services.py
 
 def commit_and_push(repo_path, branch_name, commit_message, github_token, repo_url):
     repo = Repo(repo_path)
@@ -429,7 +345,7 @@ def commit_and_push(repo_path, branch_name, commit_message, github_token, repo_u
             return {"success": False, "reason": error_msg}
 
         print(f"[GIT SUCCESS] Pushed {commit.hexsha[:7]} to {branch_name}")
-        return {"success": True, "branch": branch_name, "sha": commit.hexsha}
+        return {"success": True, "branch": branch_name, "sha": commit.hexsha, "commit_count": len(list(repo.iter_commits()))}
 
     except Exception as e:
         print(f"[GIT CRITICAL ERROR] {str(e)}")

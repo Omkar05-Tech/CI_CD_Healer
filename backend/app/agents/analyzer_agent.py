@@ -1,7 +1,12 @@
-from app.services.test_runner import run_tests #
-
+# app/agents/analyzer_agent.py
 class AnalyzerAgent:
-    def analyze(self, repo_path):
-        # Run real discovery and tests instead of just parsing static logs
-        results = run_tests(repo_path) #
-        return results["failures"] #
+    def process_logs(self, failure_data): # Renamed to match orchestrator
+        """
+        Processes the raw failure data from the scanner.
+        If no failure data is provided, it returns None.
+        """
+        if not failure_data:
+            return None #
+            
+        # Ensure it returns the dictionary format the orchestrator expects
+        return failure_data

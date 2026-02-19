@@ -56,7 +56,7 @@ class FixerService:
 
         return content
 
-    async def apply_and_push_fix(self, repo_path, failure, branch_name, github_token, repo_url):
+    async def apply_and_push_fix(self, repo_path, failure, branch_name, github_token, repo_url, commit_counter):
         """
         Reads file, gets repair from AI, writes it, and pushes via git_services.
         """
@@ -72,10 +72,15 @@ class FixerService:
             print(f"[DEBUG] Locally healed: {failure['file']} at {file_path}") # Add this
 
         # Enforces [AI-AGENT] prefix and hackathon branch specs
-        return commit_and_push(
+        result =  commit_and_push(
             repo_path=repo_path,
             branch_name=branch_name,
             commit_message=f"Fixed {failure['bug_type']} in {failure['file']}",
             github_token=github_token,
             repo_url=repo_url
         )
+
+        if result["success"]:
+            commit_counter["count"] += 1
+
+        return result
